@@ -190,6 +190,34 @@ func Save(db DB, table string, src interface{}) error {
 	return Default.Save(db, table, src)
 }
 
+// Delete a record using a query for the primary key field.
+func (d *Database) Delete(db DB, table string, src interface{}) error {
+	// make sure we have a primary key field
+	pkName, pk, err := d.PrimaryKey(src)
+	if err != nil {
+		return err
+	}
+	if pkName == "" {
+		return fmt.Errorf("meddler.Delete: no primary key field found")
+	}
+
+	// run the query
+	q := fmt.Sprintf("DELETE FROM %s WHERE %s = %s", d.quoted(table), d.quoted(pkName), d.Placeholder)
+
+	_, err = db.Exec(q, pk)
+	if err != nil {
+		return fmt.Errorf("meddler.Delete: DB error: %v\n in Query: %v", err, q)
+	}
+
+	// scan the row
+	return nil
+}
+
+// Load using the Default Database type
+func Delete(db DB, table string, src interface{}) error {
+	return Default.Delete(db, table, src)
+}
+
 // QueryOne performs the given query with the given arguments, scanning a
 // single row of results into dst. Returns sql.ErrNoRows if there was no
 // result row.
